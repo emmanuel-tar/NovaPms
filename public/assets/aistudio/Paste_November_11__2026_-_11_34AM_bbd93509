@@ -1,0 +1,1444 @@
+from pathlib import Path
+
+content = r"""# Hotel PMS — Product Requirements Document & Implementation Plan
+
+**Document version:** 1.0  
+**Planning date:** 10 November 2026  
+**Status:** Baseline product specification  
+**Target property:** 120–200 rooms  
+**Technology baseline:** Existing Node.js + PostgreSQL project  
+**Deployment:** On-premise hotel server, LAN-first, optional secure remote access  
+**Architecture:** Modular monolith with centralized API and shared transactional database
+
+---
+
+## 1. Executive Summary
+
+The Hotel PMS is an integrated property, guest-services, point-of-sale, inventory and financial-management platform for a hotel operating approximately 120–200 rooms.
+
+It will coordinate Front Office, reservations, room operations, restaurant and bar outlets, kitchen/KDS, laundry, gym, pool, transport, housekeeping, maintenance, procurement, inventory, customer management, employees, accounting and management reporting.
+
+The central business principle is that departments can operate their own workflows and retain department-level reporting, while guest-related charges and financial transactions are consolidated through a shared billing and accounting foundation.
+
+The first release should prioritize reliable room operations, reservations, check-in/check-out, guest folios, restaurant POS, charge-to-room, kitchen routing, users/permissions, configuration, auditability and deployment reliability. Additional departments will be added in controlled releases.
+
+## 2. Product Vision and Objectives
+
+### 2.1 Vision
+
+Provide one reliable operational system through which hotel management can see and control rooms, guests, services, sales, stock, staff and financial performance.
+
+### 2.2 Business objectives
+
+- Reduce manual work and duplicate data entry.
+- Maintain an accurate, real-time room inventory and room status.
+- Consolidate eligible guest charges into a single folio.
+- Preserve department-level revenue and cost visibility.
+- Improve restaurant order fulfilment through KOT and KDS routing.
+- Control stock across a central store and department stores.
+- Strengthen cash, credit, discount, refund and approval controls.
+- Produce auditable operational and financial reports.
+- Support reliable operation over a local network.
+- Allow growth in rooms, outlets, departments, users and properties without hardcoded limits.
+
+### 2.3 Success measures
+
+- No double-booking of the same room for overlapping confirmed stays.
+- Every posted guest charge is traceable to its source department, source transaction and staff member.
+- Every posted payment and accounting journal balances.
+- Room status changes are visible to authorized users in real time.
+- Inventory movements have a source, destination, quantity, unit and responsible user.
+- Night audit can identify unresolved exceptions before closing a business date.
+- Backup restoration is tested and documented.
+- Critical workflows pass user acceptance tests before production rollout.
+
+## 3. Scope
+
+### 3.1 In scope
+
+1. Hotel/property profile and configurable settings.
+2. Buildings, floors, room types, categories and individual rooms.
+3. Rate plans, packages, occupancy rules and availability.
+4. Individual, corporate and group customers.
+5. Reservations, deposits, cancellations and no-shows.
+6. Check-in, in-house stay management, room moves and checkout.
+7. Guest folios, billing windows, charge posting and settlement.
+8. Multiple restaurant/bar outlets and POS terminals.
+9. Menu, modifiers, orders, discounts, payments and room posting.
+10. KOT, preparation stations, KDS and printer routing.
+11. Laundry, gym, pool and transport services.
+12. Housekeeping and maintenance workflows.
+13. Central and department inventory, procurement and suppliers.
+14. Integrated accounting, cash management and financial reporting.
+15. Employees, roles, permissions, shifts and approvals.
+16. Audit logs, backups, operational monitoring and administration.
+17. Configurable receipt, invoice, folio and report templates.
+
+### 3.2 Later-phase or optional scope
+
+- Online booking engine and OTA/channel-manager integration.
+- Payment gateway integration.
+- Guest self-service portal and mobile application.
+- Door-lock/key-card integration.
+- Biometric attendance.
+- Payroll.
+- Advanced revenue/yield management.
+- Multi-property consolidation.
+- Event, conference and banquet management.
+- External accounting integrations.
+- Automated SMS, WhatsApp and email integrations.
+
+These should not delay the dependable core PMS.
+
+### 3.3 Out of scope for the first MVP
+
+- A distributed microservices platform.
+- A full enterprise payroll suite.
+- Unverified automatic integrations with third-party hotel platforms.
+- Automatic posting of unapproved or unverified transactions.
+- Silent deletion or alteration of posted financial records.
+
+## 4. Users, Roles and Access Control
+
+The application must support configurable roles and granular permissions. Suggested starting roles:
+
+| Role | Main responsibility |
+|---|---|
+| System Administrator | Technical configuration, users and system health |
+| Owner/Director | High-level financial and operational visibility |
+| General Manager | Property-wide operations and approvals |
+| Front Office Manager | Reservations, rooms, reception and cashier oversight |
+| Receptionist | Guest registration, check-in, room moves and checkout |
+| Reservation Officer | Availability, bookings, deposits and confirmations |
+| Restaurant Manager | Outlets, menus, POS oversight and sales |
+| Cashier | POS orders, payments and permitted room charges |
+| Kitchen Staff | KDS, preparation and order completion |
+| Storekeeper | Receipts, issues, transfers and stock counts |
+| Procurement Officer | Suppliers, purchase requests and purchase orders |
+| Accountant | Journals, receivables, payables and reconciliation |
+| Housekeeping Supervisor | Assignments, inspection and room readiness |
+| Housekeeping Staff | Cleaning tasks and room status updates |
+| Laundry Staff | Laundry intake, processing and delivery |
+| Transport Manager | Vehicles, drivers and trips |
+| Maintenance Staff | Faults and work orders |
+| HR Manager | Employee records and shifts |
+| Auditor | Read-only access to approved audit and financial records |
+
+### 4.1 Permission model
+
+Use permission keys such as:
+
+- `reservations.view`, `reservations.create`, `reservations.modify`, `reservations.cancel`
+- `frontdesk.checkin`, `frontdesk.checkout`, `frontdesk.room_move`
+- `folio.view`, `folio.post_charge`, `folio.transfer_charge`, `folio.adjust`
+- `payments.receive`, `payments.refund`, `payments.void`
+- `pos.order.create`, `pos.discount.apply`, `pos.order.void`
+- `inventory.receive`, `inventory.issue`, `inventory.transfer`, `inventory.adjust`
+- `accounting.journal.create`, `accounting.journal.approve`
+- `reports.financial.view`, `reports.financial.export`
+- `settings.manage`, `users.manage`, `roles.manage`
+
+Permissions must be enforced on the server, not just hidden in the frontend.
+
+### 4.2 Approval controls
+
+Support configurable limits for:
+
+- Maximum discount percentage or amount.
+- Refund and void amounts.
+- Complimentary services.
+- Credit sales and credit-limit overrides.
+- Manual folio adjustments.
+- Stock adjustments and write-offs.
+- Journal approval.
+- Backdated transactions.
+
+Record requester, approver, reason, timestamp and before/after values.
+
+## 5. Functional Requirements
+
+Priority definitions:
+
+- **P0:** Required for the first usable MVP.
+- **P1:** Required for the first complete operational release.
+- **P2:** Later enhancement.
+
+### 5.1 Hotel Setup and Administration
+
+**Requirements**
+
+- Configure hotel name, logo, address, contact details, registration information and base currency.
+- Configure business date, timezone, check-in time and checkout time.
+- Configure buildings, blocks, floors and room numbering.
+- Configure departments, outlets, service points and cost centres.
+- Configure payment methods, tax rules, currencies, units of measure and document sequences.
+- Configure invoice, receipt, folio, KOT and report templates.
+- Configure notification and printer settings.
+- Configure backup policies and system-health settings.
+- Support more than one property in the data model, even if the first installation activates one property.
+
+**Acceptance criteria**
+
+- Authorized administrators can create and edit configuration without code changes.
+- Deactivating a referenced configuration does not destroy historical transactions.
+- Configuration changes are auditable.
+
+### 5.2 Room Types, Categories and Room Inventory
+
+A room type/category describes the commercial product; an individual room is a physical inventory unit.
+
+**Room type fields**
+
+- Name and code.
+- Description.
+- Bed configuration.
+- Default occupancy.
+- Maximum adults and children.
+- Standard rate.
+- Extra-adult and extra-child rates.
+- Amenities.
+- Default housekeeping profile.
+- Active/inactive status.
+
+Examples: Single, Double, Twin, Deluxe, Executive, Suite and Presidential. Names must be configurable, not fixed in code.
+
+**Individual room fields**
+
+- Room number/code.
+- Building and floor.
+- Room type.
+- Room-specific attributes.
+- Operational status.
+- Maintenance/out-of-order reason.
+- Housekeeping status.
+- Notes.
+
+**Room statuses**
+
+- Vacant clean.
+- Vacant dirty.
+- Occupied.
+- Reserved/arrival expected.
+- Due out.
+- Out of service.
+- Out of order.
+- Inspection required.
+
+Availability must be derived from reservations, active stays, room blocks and room status. Do not use a single status field as the only source of truth for booking availability.
+
+**Acceptance criteria**
+
+- Users can create, rename, deactivate and reorganize room types and rooms.
+- A room cannot be assigned to overlapping confirmed stays.
+- Out-of-order rooms are excluded from sellable inventory.
+- Room moves retain the full stay and billing history.
+
+### 5.3 Rates, Packages and Availability
+
+**Requirements**
+
+- Standard room rates by room type.
+- Rate plans with effective dates.
+- Weekday/weekend rates.
+- Seasonal and event rates.
+- Occupancy-based rates.
+- Extra-bed and extra-guest charges.
+- Meal-inclusive or service-inclusive packages.
+- Corporate and negotiated rates.
+- Manual rate override subject to permission.
+- Early check-in and late checkout rules.
+- Availability calendar and room-type availability.
+- Deposit and cancellation policies.
+
+Rate calculation must be date-aware and reproducible. Store the applied rate and pricing components on each reservation/stay night so historical bills do not change when future rates are edited.
+
+### 5.4 Customer and Guest CRM
+
+Support distinct records for:
+
+- Individual guests.
+- Companies/corporate accounts.
+- Travel agents and booking partners.
+- Groups and event organizers.
+- Walk-in customers.
+- External customers using hotel facilities.
+
+**Guest profile**
+
+- Name and contact details.
+- Address and country.
+- Optional identification details according to hotel policy and applicable law.
+- Contact preferences.
+- Guest history.
+- Reservation and stay history.
+- Notes and preferences.
+- Loyalty identifier and points, if enabled.
+- Corporate association.
+
+Avoid collecting unnecessary identity data. Protect sensitive guest information with role restrictions and retention policies.
+
+**Group management**
+
+- Group profile and organizer.
+- Group booking reference.
+- Rooming list.
+- Room allocation.
+- Master account.
+- Individual guest folios.
+- Group deposits.
+- Shared or individually allocated charges.
+- Group invoice and statement.
+
+### 5.5 Reservations
+
+**Reservation channels**
+
+- Walk-in.
+- Telephone.
+- Email/manual.
+- Corporate.
+- Travel agent.
+- Group.
+- Future online booking integration.
+
+**Reservation workflow**
+
+1. Search availability by arrival, departure, occupancy and room type.
+2. Select rate plan.
+3. Create or select guest/customer.
+4. Add rooms and occupants.
+5. Calculate estimated charges, taxes and deposit requirement.
+6. Record deposit or payment commitment.
+7. Confirm, hold or mark tentative according to policy.
+8. Issue confirmation document.
+9. Amend, cancel or mark no-show with reason and policy calculation.
+
+**Rules**
+
+- Use date-range overlap validation in the database to prevent double booking.
+- Reservation status and payment status must be separate.
+- A reservation does not automatically mean a room is checked in.
+- Cancellation fees and refunds must be explicit transactions.
+- Keep a history of reservation changes.
+
+### 5.6 Front Desk, Check-in and Checkout
+
+**Check-in**
+
+- Find reservation or create walk-in stay.
+- Verify guest and occupant details.
+- Confirm room readiness.
+- Assign room.
+- Record deposit and payment.
+- Capture agreed rate and billing instructions.
+- Create active stay and folio.
+- Print registration/arrival documents where configured.
+
+**In-house operations**
+
+- View arrivals, departures and in-house guests.
+- Extend stay subject to availability.
+- Change room.
+- Add or remove occupants with audit trail.
+- Record wake-up calls or guest requests if enabled.
+- View folio and department charges.
+- Transfer charges between authorized billing windows/folios.
+- Record guest complaints and service requests.
+
+**Checkout**
+
+- Review all posted charges and outstanding balances.
+- Identify pending department orders and unposted services.
+- Settle by one or multiple payment methods.
+- Apply approved credit or company billing instructions.
+- Issue final invoice/receipt.
+- Close stay and update room housekeeping status.
+- Preserve closed folio and accounting history.
+
+Do not permit checkout to silently discard unresolved charges. Support an authorized checkout exception workflow where business policy requires it.
+
+### 5.7 Guest Folio and Central Charge Engine
+
+This is a foundational P0 capability.
+
+A folio is the guest-facing account for a stay. It may have multiple billing windows, payers or routing instructions.
+
+**Folio capabilities**
+
+- Multiple folios/billing windows per stay.
+- Room accommodation postings.
+- Restaurant and bar charges.
+- Laundry charges.
+- Gym and pool charges.
+- Transport charges.
+- Minibar and other service charges.
+- Taxes, service charges and discounts.
+- Deposits and payments.
+- Split settlement.
+- Charge transfer between folios.
+- Corporate/master-account routing.
+- Invoice and statement generation.
+
+**Charge record**
+
+- Unique transaction ID.
+- Property and business date.
+- Guest, stay, room and folio references.
+- Department and outlet.
+- Source module and source transaction ID.
+- Description and quantity.
+- Gross/base amount.
+- Discount and reason.
+- Tax components.
+- Net total.
+- Posting status.
+- Created by and approved by.
+- Created, posted and reversed timestamps.
+
+**Financial integrity rules**
+
+- Posted charges must be immutable.
+- Correct posted charges through reversal and replacement/adjustment.
+- Use idempotency keys for integrations and retries.
+- Use database transactions for source order posting and folio posting.
+- Prevent duplicate room charges if a request is retried.
+- Keep source order status and folio posting status consistent.
+- A charge must reference an active stay unless an authorized account-billing workflow is used.
+- Require room/guest verification and optional spending restrictions for room charges.
+
+### 5.8 Restaurant and Bar POS
+
+Support multiple outlets:
+
+- Main restaurant.
+- Pool bar.
+- Lounge/bar.
+- Room service.
+- Other configurable outlets.
+
+**POS requirements**
+
+- Menu categories and items.
+- Item variants and modifiers.
+- Price lists by outlet.
+- Item availability and sold-out controls.
+- Dine-in, takeaway and room-service order types.
+- Table management and table transfers.
+- Open orders and split/merge bills.
+- Cash, card/POS, transfer, approved credit and charge-to-room payments.
+- Split tenders.
+- Discounts and promotions.
+- Complimentary items with approval.
+- Voids and refunds with reason and permission.
+- Cashier shift opening/closing.
+- Receipt printing.
+- Outlet sales reports.
+- Offline behavior must be explicitly designed; the first release should not claim safe offline financial posting without a tested synchronization model.
+
+**Charge-to-room workflow**
+
+1. Cashier chooses room charge.
+2. Search/select occupied room or guest.
+3. API verifies active stay, room, guest and folio.
+4. API checks outlet policy and any spending/credit restriction.
+5. Cashier confirms the guest/authorized payer.
+6. POS order is finalized and charge posted atomically or through a reliable idempotent posting workflow.
+7. Guest folio and outlet sales update.
+8. Receipt identifies the room-charge method.
+
+For external visitors, use normal customer billing/payment and do not allow room posting.
+
+### 5.9 Kitchen, KOT, KDS and Printer Routing
+
+**Preparation stations**
+
+Examples: Main Kitchen, Grill, Bakery, Beverage, Pool Bar.
+
+**Requirements**
+
+- Assign menu items to one or more stations.
+- Route order items to the correct station.
+- Generate KOT by station.
+- KDS views for pending, accepted, preparing, ready and served items.
+- Order timers and priority.
+- Item-level preparation status.
+- Re-fire and void controls.
+- Reprint controls with audit history.
+- Display order number, table/room, modifiers and special instructions.
+- Real-time updates using Socket.IO.
+- Printer profiles by outlet/station.
+- USB, LAN/network and Windows-installed printer support through a tested print service/agent.
+- Configurable receipt and kitchen ticket templates.
+
+**Important design decision**
+
+The web application should not assume a browser can silently print to every USB or LAN printer. Evaluate a local Windows print agent or a controlled browser/OS print workflow. Keep printer drivers and device-specific code outside core order logic.
+
+### 5.10 Laundry
+
+- Service catalogue: wash, dry clean, iron, express and other configurable services.
+- Per-item and per-weight pricing.
+- Laundry intake with guest, room and stay.
+- Item quantity and condition.
+- Pickup and delivery tracking.
+- Status: received, processing, ready, delivered, cancelled.
+- Staff assignment.
+- Damage/loss incident record.
+- Guest confirmation.
+- Invoice and charge-to-room.
+- External customer billing.
+- Laundry revenue and productivity reports.
+
+### 5.11 Gym and Pool
+
+**Gym**
+
+- Access pass and membership types.
+- In-house guest access rules.
+- External membership.
+- Daily, weekly and monthly fees.
+- Personal training and paid services.
+- Access log and staff registration.
+- Charge-to-room where permitted.
+
+**Pool**
+
+- Guest and external visitor registration.
+- Day passes and membership.
+- Access fees and complimentary rules.
+- Towel or equipment tracking if required.
+- Pool bar integration.
+- Charge-to-room and external settlement.
+
+Each property must configure whether access is included in room packages, complimentary, discounted or chargeable.
+
+### 5.12 Transport
+
+- Vehicle register and vehicle capacity.
+- Driver records.
+- Airport pickup/drop-off.
+- Hotel shuttle.
+- Private trip.
+- Booking date/time and pickup/drop-off.
+- Fixed, distance-based or negotiated pricing.
+- Trip assignment and status.
+- Vehicle availability and maintenance status.
+- Fuel/operating expense capture in a later release.
+- Guest/group/corporate billing.
+- Charge-to-room.
+- Trip and revenue reports.
+
+### 5.13 Housekeeping
+
+- Room cleaning board.
+- Assign rooms to attendants.
+- Priority and due time.
+- Status: dirty, assigned, cleaning, cleaned, inspected, ready.
+- Inspection checklist.
+- Room discrepancy and damage reporting.
+- Linen and amenity replenishment.
+- Lost and found.
+- Guest requests.
+- Real-time room readiness to Front Office.
+
+Only authorized staff should be able to mark a room inspected/ready according to the hotel's workflow.
+
+### 5.14 Maintenance
+
+- Maintenance request from room or department.
+- Priority and fault category.
+- Equipment/asset register.
+- Assign technician.
+- Work order and status.
+- Parts/material usage.
+- Labor and expense recording.
+- Preventive maintenance schedules.
+- Room out-of-order/out-of-service controls.
+- Repair history and maintenance reports.
+
+### 5.15 Inventory and Procurement
+
+The chosen model is one central store plus department stores. The schema should also permit additional stores later.
+
+**Stock structure**
+
+- Item catalogue and item codes.
+- Categories and subcategories.
+- Units of measure and conversions.
+- Suppliers.
+- Central store.
+- Department stores.
+- Reorder levels.
+- Batch, expiry and serial tracking where applicable.
+
+**Procurement workflow**
+
+1. Department raises requisition.
+2. Manager approves.
+3. Procurement creates purchase order.
+4. Supplier delivers.
+5. Storekeeper records goods received note.
+6. Quantity/quality discrepancies are recorded.
+7. Stock and supplier payable are updated according to approved workflow.
+
+**Stock movements**
+
+- Goods receipt.
+- Store-to-store transfer.
+- Department issue.
+- Department return.
+- Stock adjustment.
+- Wastage/write-off.
+- Stock count and reconciliation.
+
+Use a stock movement ledger. Do not directly overwrite stock balances without a corresponding movement record.
+
+**Recipes and consumption**
+
+- Define recipe/BOM for saleable menu items.
+- Configure ingredient quantities and units.
+- Deduct ingredients from the designated outlet/department store when a sale is finalized.
+- Handle modifiers, wastage, substitutions and recipe versions.
+- Provide theoretical-versus-actual usage reports.
+- Prevent negative stock or require a controlled override according to property policy.
+
+Inventory costing method (weighted average or FIFO) must be selected and documented before financial inventory valuation is released.
+
+### 5.16 Finance and Accounting
+
+The system should include an integrated accounting foundation, not just a collection of revenue reports.
+
+**Accounting modules**
+
+- Chart of accounts.
+- General ledger.
+- Journal entries.
+- Accounts receivable.
+- Accounts payable.
+- Cash and bank accounts.
+- Payment receipts.
+- Supplier payments.
+- Customer statements.
+- Expense management.
+- Department/outlet cost centres.
+- Tax reports.
+- Trial balance.
+- Profit and loss.
+- Balance sheet.
+- Cash flow reporting.
+- Bank reconciliation.
+- Period close and controls.
+
+**Double-entry rule**
+
+Every posted financial event must create balanced journal entries. Source modules should create accounting events through a controlled posting service, not write arbitrary ledger rows.
+
+Example conceptual posting for a cash restaurant sale:
+
+- Debit: Cash/clearing account.
+- Credit: Restaurant revenue.
+- Credit: Tax payable, where applicable.
+
+Example conceptual posting for an authorized room charge:
+
+- Debit: Guest receivable/guest folio control.
+- Credit: Department revenue.
+- Credit: Tax payable, where applicable.
+
+The final accounts and posting rules must be reviewed by the hotel's accountant.
+
+**Customer credit**
+
+- Credit account approval.
+- Credit limit and terms.
+- Aging.
+- Statements.
+- Receipts and allocations.
+- Credit notes.
+- Overdue account flags.
+- Approval for limit overrides.
+
+**Taxes**
+
+Support configurable taxes by effective date, outlet, service and item. Support inclusive/exclusive pricing, exemptions and multiple tax components. Tax configuration must be validated against applicable Nigerian tax requirements by the hotel's tax adviser; do not hardcode a rate.
+
+**Discounts**
+
+- Percentage or fixed amount.
+- Item, order, room, group or corporate discount.
+- Validity period.
+- Eligibility rules.
+- Approval threshold.
+- Reason and audit record.
+- Define whether discount is applied before tax according to tax/accounting policy.
+
+### 5.17 Night Audit and Business Date
+
+A critical hotel-specific process.
+
+- Maintain a property business date independent of server calendar date.
+- Identify arrivals, departures, in-house stays and no-shows.
+- Post scheduled room charges for eligible stays.
+- Reconcile outlet sales, payments, deposits and folios.
+- Identify unsettled or unposted orders.
+- Identify negative folios, unbalanced postings and exceptions.
+- Generate daily operational and financial summaries.
+- Require authorized close.
+- Prevent duplicate room posting on rerun through idempotency and business-date controls.
+- Preserve a reopen/adjustment process with approval and audit trail.
+
+### 5.18 Reporting and Dashboards
+
+**Management dashboard**
+
+- Occupancy.
+- Arrivals and departures.
+- Rooms available, occupied and out of order.
+- Room revenue.
+- ADR and RevPAR.
+- Revenue by department/outlet.
+- Cash/card/transfer/credit collections.
+- Outstanding guest and corporate balances.
+- Stock alerts.
+- Restaurant order performance.
+- Housekeeping readiness.
+- Maintenance issues.
+
+**Operational reports**
+
+- Reservation list and pickup.
+- Guest in-house list.
+- Room status and room history.
+- Guest ledger and folio.
+- No-show/cancellation.
+- POS sales by outlet/item/cashier.
+- KOT/KDS preparation time.
+- Laundry service report.
+- Transport trip report.
+- Stock on hand and movement.
+- Purchase and supplier report.
+- Expense report.
+- Trial balance and financial statements.
+
+Reports must respect user permissions and property/business-date filters.
+
+## 6. Core Workflows
+
+### 6.1 Reservation to checkout
+
+1. Search room-type availability.
+2. Create reservation and select rate plan.
+3. Record guest and occupants.
+4. Calculate estimated charges and deposit.
+5. Confirm reservation.
+6. Check guest in and assign clean room.
+7. Create stay and folio.
+8. Post nightly accommodation according to night-audit policy.
+9. Receive restaurant, laundry and service charges.
+10. Review and settle folio.
+11. Issue invoice and close stay.
+12. Send room to housekeeping as dirty.
+
+### 6.2 Restaurant order to room folio
+
+1. Cashier creates order.
+2. Items route to preparation stations.
+3. KOT/KDS receives order.
+4. Kitchen prepares and marks ready.
+5. Order is served.
+6. Cashier selects charge-to-room.
+7. PMS validates active stay and guest.
+8. Order is finalized and folio charge is posted.
+9. Accounting event is created.
+10. Restaurant and guest reports update.
+
+### 6.3 Central store to department consumption
+
+1. Department raises stock requisition.
+2. Manager approves.
+3. Storekeeper issues stock.
+4. Destination department acknowledges receipt.
+5. Movement ledger records both sides.
+6. Department inventory updates.
+7. POS recipe consumption reduces department stock.
+8. Wastage and count variances are recorded.
+
+### 6.4 Group billing
+
+1. Create group/customer account.
+2. Create group reservation and rooming list.
+3. Allocate rooms and guests.
+4. Configure master and individual billing windows.
+5. Route agreed charges to master account.
+6. Route personal charges to individual folios.
+7. Settle by group/company/individual.
+8. Produce group statement and individual invoices as required.
+
+## 7. Technical Architecture
+
+### 7.1 Recommended architecture
+
+Use a modular monolith initially. Modules have clear service and data ownership boundaries but share one PostgreSQL database and deploy as one backend application.
+
+```text
+Users / Devices
+  ├── Front Office Browser
+  ├── POS Terminals
+  ├── KDS Screens
+  ├── Housekeeping Devices
+  └── Management Browser
+          |
+          v
+     React + Vite UI
+          |
+          v
+     Node.js / Express API
+          |
+          ├── Authentication & RBAC
+          ├── Hotel Configuration
+          ├── Reservations & Rooms
+          ├── Guest & Stay Management
+          ├── Folio & Charge Engine
+          ├── POS & Orders
+          ├── KOT / KDS / Printing
+          ├── Hotel Services
+          ├── Inventory & Procurement
+          ├── Accounting
+          ├── Housekeeping & Maintenance
+          ├── Reporting
+          └── Audit & Night Audit
+          |
+          v
+       PostgreSQL
+          |
+          ├── Scheduled jobs / controlled worker
+          ├── Backup and restore
+          └── Local print agent / device integration
+
+Socket.IO: real-time order, room and status updates
+```
+
+### 7.2 Technology baseline
+
+- Frontend: React + Vite, retaining the existing application where viable.
+- Backend: Node.js + Express, retaining existing API patterns where viable.
+- Database: PostgreSQL.
+- Database access: retain current ORM/query layer if sound; standardize migrations and transaction boundaries.
+- Real-time: Socket.IO.
+- Authentication: secure server-managed sessions or short-lived access tokens with refresh/session rotation; choose one consistent model.
+- Password hashing: Argon2id or appropriately configured bcrypt.
+- Validation: shared request schemas, e.g. Zod.
+- Logging: structured logs with correlation IDs.
+- Testing: unit, integration and browser end-to-end tests.
+- Deployment: Windows Server or supported Windows host, with a documented service/process manager and reverse proxy as appropriate.
+- Printing: controlled Windows print agent or explicit OS print flow.
+
+Do not introduce a second ORM or framework without first inspecting the existing codebase.
+
+### 7.3 LAN-first deployment
+
+- Host API and PostgreSQL on a dedicated, supported server.
+- Give the server a reserved/static LAN address.
+- Use internal DNS or a stable host name.
+- Permit only required ports through the firewall.
+- Do not expose PostgreSQL directly to the internet.
+- Use HTTPS on LAN where practical, especially for credentials and sessions.
+- Remote access must use a VPN or secure zero-trust gateway, MFA and role restrictions; do not simply expose the application or database ports publicly.
+- Provide UPS/power protection and server health monitoring.
+- Back up to a separate device and, where policy permits, an encrypted off-site destination.
+- Document recovery objectives: target RPO and RTO must be agreed with hotel management.
+
+### 7.4 Offline and outage behavior
+
+The first release should be honest about network dependency. If the server is unavailable, clients must not silently accept financial transactions that cannot be safely committed.
+
+Define:
+- Clear connection-lost status.
+- Retry behavior for safe read requests.
+- Idempotency for retried writes.
+- Local print queue behavior where appropriate.
+- Controlled recovery after server restart.
+- A documented manual continuity procedure for reception and POS.
+- Optional offline POS capability only as a separately designed and tested enhancement.
+
+## 8. Data Architecture and Core Entities
+
+The schema should use UUID primary keys, timestamps, foreign keys, indexes, explicit status fields and audit columns. Monetary values should use PostgreSQL `NUMERIC`, never floating-point types.
+
+### 8.1 Property and configuration
+
+- `properties`
+- `buildings`
+- `floors`
+- `departments`
+- `outlets`
+- `service_points`
+- `hotel_settings`
+- `document_sequences`
+- `currencies`
+- `exchange_rates`
+- `taxes`
+- `tax_rules`
+- `payment_methods`
+- `units_of_measure`
+- `printer_devices`
+- `printer_routes`
+- `kds_stations`
+
+### 8.2 Rooms and reservations
+
+- `room_types`
+- `rooms`
+- `room_amenities`
+- `room_type_amenities`
+- `rate_plans`
+- `rate_rules`
+- `room_blocks`
+- `reservations`
+- `reservation_rooms`
+- `reservation_guests`
+- `reservation_deposits`
+- `stays`
+- `stay_guests`
+- `room_assignments`
+- `room_status_history`
+
+### 8.3 Guests and customers
+
+- `customers`
+- `guest_profiles`
+- `corporate_accounts`
+- `customer_contacts`
+- `customer_addresses`
+- `customer_credit_terms`
+- `customer_credit_limits`
+- `customer_groups`
+- `loyalty_accounts`
+- `loyalty_transactions`
+
+Use a customer master model with explicit subtypes or linked profile tables; avoid duplicating a company and its contacts as unrelated customer records.
+
+### 8.4 Folios and payments
+
+- `folios`
+- `folio_windows`
+- `folio_charges`
+- `folio_charge_tax_lines`
+- `folio_payments`
+- `payment_allocations`
+- `folio_transfers`
+- `folio_adjustments`
+- `refunds`
+- `invoices`
+- `invoice_lines`
+- `credit_notes`
+
+### 8.5 POS and kitchen
+
+- `pos_terminals`
+- `pos_shifts`
+- `menus`
+- `menu_categories`
+- `menu_items`
+- `menu_item_prices`
+- `modifiers`
+- `menu_item_modifiers`
+- `restaurant_tables`
+- `orders`
+- `order_items`
+- `order_item_modifiers`
+- `order_payments`
+- `kitchen_tickets`
+- `kitchen_ticket_items`
+- `preparation_stations`
+- `order_status_history`
+
+### 8.6 Services
+
+- `service_catalog`
+- `laundry_orders`
+- `laundry_order_items`
+- `facility_memberships`
+- `facility_access_logs`
+- `transport_vehicles`
+- `drivers`
+- `transport_bookings`
+- `transport_trips`
+- `housekeeping_tasks`
+- `room_inspections`
+- `maintenance_assets`
+- `maintenance_requests`
+- `maintenance_work_orders`
+
+### 8.7 Inventory and procurement
+
+- `inventory_items`
+- `inventory_categories`
+- `inventory_stores`
+- `inventory_balances`
+- `inventory_movements`
+- `inventory_movement_lines`
+- `stock_requisitions`
+- `stock_requisition_lines`
+- `purchase_orders`
+- `purchase_order_lines`
+- `goods_received_notes`
+- `goods_received_lines`
+- `suppliers`
+- `supplier_invoices`
+- `recipes`
+- `recipe_lines`
+- `stock_counts`
+- `stock_count_lines`
+- `wastage_records`
+
+`inventory_balances` may be a maintained projection for performance; `inventory_movements` remains the authoritative movement history.
+
+### 8.8 Accounting and audit
+
+- `chart_of_accounts`
+- `accounting_periods`
+- `journal_entries`
+- `journal_lines`
+- `cost_centres`
+- `cash_accounts`
+- `bank_accounts`
+- `expenses`
+- `receivables`
+- `payables`
+- `bank_reconciliations`
+- `tax_transactions`
+- `audit_logs`
+- `approval_requests`
+- `approval_actions`
+- `business_dates`
+- `night_audit_runs`
+- `integration_events`
+- `outbox_events`
+
+### 8.9 Security
+
+- `employees`
+- `users`
+- `roles`
+- `permissions`
+- `user_roles`
+- `role_permissions`
+- `user_property_access`
+- `sessions`
+- `login_attempts`
+- `password_reset_tokens`
+
+Sensitive personal data should have appropriate access restrictions and retention rules. Passwords and tokens must never be stored in plain text.
+
+## 9. Critical Data and Financial Rules
+
+1. Use database transactions for multi-record business operations.
+2. Use unique constraints and exclusion constraints to prevent conflicting room assignments.
+3. Use idempotency keys for charge posting, payments, order finalization and scheduled postings.
+4. Store money as `NUMERIC(18,2)` or an appropriate precision selected for supported currencies.
+5. Store currency code with every monetary transaction.
+6. Store applied tax and pricing snapshots on transaction lines.
+7. Never recalculate historical invoices from current menu or room rates.
+8. Posted accounting entries must balance: total debits equal total credits.
+9. Posted financial records are reversed/adjusted, not silently deleted.
+10. Inventory balances must reconcile to movement history.
+11. Keep property timezone and business date explicit.
+12. Define foreign-key deletion behavior; use archival/deactivation for referenced master data.
+13. Keep a durable audit trail for privileged actions.
+14. Use an outbox or equivalent reliable event pattern for cross-module side effects.
+15. Prevent duplicate night-audit postings on retries.
+
+## 10. Non-Functional Requirements
+
+### Performance
+
+Initial design targets, to be confirmed through load testing:
+
+- Typical API read response: under 500 ms at normal operating load.
+- Typical transactional API response: under 1 second, excluding external device/network delays.
+- Real-time KDS/room status update: normally within 2 seconds on the LAN.
+- Support expected concurrent reception, POS, kitchen, housekeeping and management users; establish a measured target during discovery.
+- Index common searches: room/date availability, guest name/phone, folio, order, invoice and stock item.
+
+### Availability and recovery
+
+- Server restart must not corrupt committed transactions.
+- Automated scheduled backups.
+- Regular restore drills.
+- Documented RPO/RTO.
+- Monitoring for disk space, database health and backup failures.
+- Controlled database migration and rollback plan.
+
+### Security
+
+- Server-side authorization on every protected action.
+- Strong password hashing and configurable password policy.
+- Login throttling and temporary lockout controls.
+- Session expiration and revocation.
+- MFA for remote/privileged access where feasible.
+- HTTPS and secure cookie/session settings.
+- Input validation and parameterized database access.
+- Secrets kept outside source control.
+- Audit trail for financial and security events.
+- Least-privilege database and operating-system accounts.
+- Restricted access to guest identification and financial records.
+
+### Usability
+
+- Responsive interfaces for desktop and supported tablets.
+- Fast keyboard-friendly POS and reception workflows.
+- Clear statuses, warnings and confirmation dialogs.
+- Consistent currency/date formatting.
+- Accessible contrast and readable KDS display.
+- Department-specific navigation.
+
+## 11. Implementation Roadmap
+
+The sequence below is a delivery order, not a promise of calendar duration. Actual estimates depend on repository condition, existing functionality, team size and test results.
+
+### Phase 0 — Existing Project Audit and Stabilization
+
+**Deliverables**
+
+- Inspect repository structure and package scripts.
+- Inspect current backend routes, frontend imports and API client.
+- Inspect PostgreSQL schema and migrations.
+- Identify implemented, partial and missing features.
+- Resolve known startup/build errors.
+- Confirm authentication and authorization approach.
+- Add environment variable validation.
+- Establish linting, formatting and test commands.
+- Establish a baseline deployment and backup procedure.
+
+**Exit criteria**
+
+- Frontend builds.
+- Backend starts reliably.
+- Database migrations run from a clean database.
+- Health endpoint works.
+- Existing known bugs are logged with reproducible steps.
+- No claim of feature completion without test evidence.
+
+### Phase 1 — Foundation and Access Control
+
+**Build**
+
+- Property configuration.
+- Departments and outlets.
+- Employees, users, roles and permissions.
+- Audit logging.
+- Buildings, floors, room types and rooms.
+- Tax, currency and payment settings.
+- Document numbering.
+
+**Exit criteria**
+
+- Admin can configure property and rooms.
+- Permissions are enforced by API.
+- Sensitive actions are logged.
+- Seed/demo data can be loaded safely.
+
+### Phase 2 — Reservations, Front Desk and Folio
+
+**Build**
+
+- Customer/guest CRM.
+- Rate plans and availability.
+- Reservation lifecycle.
+- Room allocation.
+- Check-in and checkout.
+- Active stays.
+- Guest folios and billing windows.
+- Deposits and payments.
+- Room charge posting service.
+- Guest invoices and statements.
+
+**Exit criteria**
+
+- Complete reservation-to-checkout workflow passes end-to-end tests.
+- Double booking is prevented at database level.
+- Folio charges and payments reconcile.
+- Room moves preserve stay and folio history.
+
+### Phase 3 — Restaurant POS, KOT, KDS and Printing
+
+**Build**
+
+- Multiple outlets.
+- Menu and modifiers.
+- Tables and orders.
+- POS shifts.
+- Split tenders.
+- Charge-to-room.
+- KOT and station routing.
+- KDS workflow.
+- Printer configuration and test print.
+- Sales and cashier reports.
+
+**Exit criteria**
+
+- Restaurant order can route to multiple preparation stations.
+- KDS status changes are real-time.
+- Room-charge posting is idempotent.
+- Receipt and KOT output are tested on actual target devices.
+- POS sales reconcile to folio and accounting records.
+
+### Phase 4 — Inventory and Procurement
+
+**Build**
+
+- Central and department stores.
+- Item catalogue and units.
+- Suppliers.
+- Requisitions and approvals.
+- Purchase orders and GRNs.
+- Stock transfers and issues.
+- Stock counts and adjustments.
+- Recipes and menu consumption.
+- Wastage and stock valuation.
+
+**Exit criteria**
+
+- Movement history reconciles to balances.
+- Transfers cannot create or lose stock.
+- Recipe consumption is reproducible.
+- Negative-stock policy is enforced.
+
+### Phase 5 — Additional Hotel Services
+
+**Build**
+
+- Laundry.
+- Gym and pool.
+- Transport.
+- Housekeeping.
+- Maintenance.
+- Service catalogue and charge integration.
+
+**Exit criteria**
+
+- Each service can create a traceable guest charge.
+- External customer billing works.
+- Room readiness is synchronized with Front Office.
+- Service-level revenue reports reconcile to finance.
+
+### Phase 6 — Integrated Accounting and Night Audit
+
+**Build**
+
+- Chart of accounts.
+- Posting rules.
+- General ledger and journals.
+- Receivables and payables.
+- Expenses.
+- Credit management.
+- Tax reporting.
+- Cash/bank reconciliation.
+- Night audit and business date.
+- Financial statements.
+
+**Exit criteria**
+
+- Every financial source event creates balanced journal entries.
+- Guest folio balances reconcile.
+- Department revenue reconciles to the ledger.
+- Night audit can be safely retried without duplicate postings.
+- Period closing and adjustments are auditable.
+
+### Phase 7 — Production Hardening and Rollout
+
+**Build/test**
+
+- Security review.
+- Load and concurrency testing.
+- Backup and restore test.
+- Printer and KDS device testing.
+- LAN outage and recovery tests.
+- Data migration and seed strategy.
+- User acceptance testing.
+- Staff training.
+- Production deployment and monitoring.
+- Operational support documentation.
+
+**Exit criteria**
+
+- Critical workflows signed off by hotel representatives.
+- Recovery test passed.
+- No unresolved critical security defects.
+- Reconciliation reports pass.
+- Staff can perform core tasks using documented procedures.
+
+## 12. Testing Strategy
+
+### Unit tests
+
+- Rate calculation.
+- Tax calculation.
+- Discount calculation.
+- Folio balance.
+- Payment allocation.
+- Credit-limit validation.
+- Inventory quantity conversion.
+- Recipe consumption.
+- Accounting posting rules.
+- Permission checks.
+
+### Integration tests
+
+- Reservation to stay.
+- Check-in to folio creation.
+- POS to KOT/KDS.
+- POS to room charge.
+- Laundry to folio.
+- Stock receipt to department transfer.
+- Menu sale to stock deduction.
+- Financial event to journal.
+- Night audit retry and recovery.
+
+### End-to-end tests
+
+1. Walk-in guest checks in and pays deposit.
+2. Reserved guest checks in, changes room and checks out.
+3. Restaurant order is sent to kitchen and charged to room.
+4. Guest uses laundry and pool services.
+5. Guest pays partly by cash and partly by transfer.
+6. Corporate group receives a master invoice.
+7. Cashier attempts an unauthorized discount.
+8. Storekeeper transfers stock to restaurant.
+9. Night audit posts room revenue once.
+10. Backup is restored into a test environment.
+
+### Operational tests
+
+- Simultaneous room booking attempts.
+- Multiple POS terminals posting concurrently.
+- Duplicate API requests.
+- Network interruption during order finalization.
+- Printer offline and recovery.
+- Database restart.
+- Disk space warning.
+- Restore from backup.
+
+## 13. Deployment and Operations Plan
+
+### Server baseline
+
+Select hardware after measuring expected load. For a 120–200 room property, provision a dedicated business-grade server with SSD storage, adequate RAM, reliable UPS and separate backup storage. Avoid treating a staff workstation as the permanent production server.
+
+### Network
+
+- Server has a reserved LAN address.
+- Reception, POS and KDS devices use reliable wired or managed wireless connectivity.
+- Separate guest Wi-Fi from the hotel operations network.
+- Firewall permits only required client-to-server communication.
+- Remote access uses VPN/secure gateway with MFA.
+- Database port is not exposed to guest or public networks.
+
+### Backup
+
+- Scheduled PostgreSQL backups.
+- Separate backup destination.
+- Encrypted off-site copy where permitted.
+- Retention policy agreed with management.
+- Regular automated backup verification.
+- Scheduled restore drills.
+- Document recovery steps and responsible staff.
+
+### Release management
+
+- Development, staging/UAT and production environments.
+- Versioned database migrations.
+- Tested release package.
+- Pre-release backup.
+- Rollback plan.
+- Release notes.
+- Post-deployment smoke tests.
+
+## 14. Key Product Decisions Still Requiring Confirmation
+
+These are discovery items, not blockers to the architecture:
+
+1. Exact hotel legal/business name, timezone and financial year.
+2. Whether there is one property today or multiple properties planned.
+3. Exact room categories, room count and room numbering structure.
+4. Number and names of restaurant/bar outlets.
+5. Whether restaurant POS must continue operating during server/network outage.
+6. Actual printer models, connection types and Windows versions.
+7. Whether the hotel uses existing accounting software or wants the PMS to become the accounting system of record.
+8. Applicable tax configuration, validated by the hotel's accountant/tax adviser.
+9. Credit approval policy and corporate payment terms.
+10. Gym/pool rules for in-house guests versus external visitors.
+11. Inventory valuation policy and food/beverage recipe requirements.
+12. Required backup RPO/RTO and remote-access policy.
+
+## 15. Recommended MVP Boundary
+
+The MVP should not attempt every hotel department at once.
+
+### MVP must include
+
+- Property settings.
+- User authentication and RBAC.
+- Room types, rooms, buildings and floors.
+- Guest/customer records.
+- Reservations and availability.
+- Check-in, checkout and room moves.
+- Guest folio.
+- Room charges and payments.
+- Basic taxes, discounts and approvals.
+- Restaurant POS with multiple outlets.
+- Charge-to-room.
+- KOT and KDS.
+- Printer configuration for the target hardware.
+- Basic inventory receipt and issue.
+- Essential dashboards and operational reports.
+- Audit logs.
+- Nightly backup and documented restore.
+
+### First complete operational release
+
+Add:
+- Laundry, gym, pool and transport.
+- Housekeeping and maintenance.
+- Full central/department inventory.
+- Procurement and suppliers.
+- Integrated double-entry accounting.
+- Customer credit and corporate statements.
+- Night audit and financial close.
+
+## 16. Definition of Done
+
+A feature is not complete merely because its screen exists.
+
+A feature is done only when:
+
+- Business rules are documented.
+- Database migration exists.
+- API validation and authorization exist.
+- Frontend workflow is connected to real APIs.
+- Errors and loading states are handled.
+- Audit and financial controls are implemented where relevant.
+- Automated tests pass.
+- Relevant reports reconcile.
+- User acceptance criteria pass.
+- Documentation is updated.
+
+## 17. Immediate Next Steps
+
+1. Audit the current `hotel-pms` repository and record the real implementation state.
+2. Preserve working code; do not rewrite before understanding it.
+3. Resolve the existing frontend API export mismatch and any backend startup issues.
+4. Produce the current-state architecture and gap report.
+5. Establish the database migration baseline.
+6. Implement authentication, RBAC, audit logging and hotel configuration.
+7. Implement rooms, reservations, stays and the central folio.
+8. Integrate POS, KOT/KDS and room posting.
+9. Expand into inventory, services and accounting.
+
+**Project governance:** Keep this PRD as the product source of truth. Maintain a separate technical design, database ERD, API specification, test plan and phase-by-phase task backlog. Every change to scope or financial behavior should be reflected in these artifacts before implementation.
+"""
+
+path = Path("/mnt/data/Hotel_PMS_PRD_Implementation_Plan.md")
+path.write_text(content, encoding="utf-8")
+print(f"Created: {path}\nSize: {path.stat().st_size:,} bytes")
