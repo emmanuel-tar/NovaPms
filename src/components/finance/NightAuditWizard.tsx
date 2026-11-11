@@ -27,7 +27,7 @@ export const NightAuditWizard: React.FC = () => {
     runNightAudit,
     formatMoney,
     nightAuditLog,
-    currentUser,
+    currentEmployee,
   } = usePMS();
 
   const [auditStep, setAuditStep] = useState<1 | 2 | 3 | 4>(1);
@@ -66,7 +66,7 @@ export const NightAuditWizard: React.FC = () => {
             <p className="text-xs text-slate-400">
               Current Business Date:{' '}
               <span className="font-mono font-bold text-white">{businessDate}</span> · Auditor:{' '}
-              {currentUser.name}
+              {currentEmployee.name}
             </p>
           </div>
         </div>

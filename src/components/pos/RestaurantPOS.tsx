@@ -29,7 +29,7 @@ export const RestaurantPOS: React.FC = () => {
     stays,
     createPOSOrder,
     formatMoney,
-    currentUser,
+    currentEmployee,
     businessDate,
     showToast,
   } = usePMS();
@@ -561,7 +561,7 @@ export const RestaurantPOS: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span>Server:</span>
-                <span>{currentUser.name}</span>
+                <span>{currentEmployee.name}</span>
               </div>
               <div className="flex justify-between">
                 <span>Destination:</span>

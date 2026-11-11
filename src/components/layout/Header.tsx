@@ -25,9 +25,9 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
   const {
-    currentUser,
-    staffUsers,
-    setCurrentUser,
+    currentEmployee,
+    employees,
+    setCurrentEmployee,
     businessDate,
     rooms,
     stays,
@@ -134,16 +134,16 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors whitespace-nowrap text-left"
           >
             <div
-              className={`w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-bold ${currentUser.avatarColor}`}
+              className={`w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-bold ${currentEmployee.avatarColor}`}
             >
-              {currentUser.name[0]}
+              {currentEmployee.name[0]}
             </div>
             <div className="hidden sm:block">
               <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 leading-tight">
-                {currentUser.name}
+                {currentEmployee.name}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                {currentUser.title}
+                {currentEmployee.title}
               </div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
@@ -154,26 +154,26 @@ export const Header: React.FC<HeaderProps> = ({ isDark, setIsDark }) => {
               <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 text-[11px] font-semibold text-slate-400 tracking-wider uppercase">
                 Switch Operational Role
               </div>
-              {staffUsers.map((user) => (
+              {employees.map((emp) => (
                 <button
-                  key={user.id}
+                  key={emp.id}
                   onClick={() => {
-                    setCurrentUser(user);
+                    setCurrentEmployee(emp);
                     setRoleDropdownOpen(false);
                   }}
                   className={`w-full text-left px-3 py-2 flex items-center gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
-                    currentUser.id === user.id ? 'bg-slate-50 dark:bg-slate-800/70 font-semibold' : ''
+                    currentEmployee.id === emp.id ? 'bg-slate-50 dark:bg-slate-800/70 font-semibold' : ''
                   }`}
                 >
                   <div
-                    className={`w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-bold shrink-0 ${user.avatarColor}`}
+                    className={`w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-bold shrink-0 ${emp.avatarColor}`}
                   >
-                    {user.name[0]}
+                    {emp.name[0]}
                   </div>
                   <div className="truncate">
-                    <div className="text-xs text-slate-900 dark:text-slate-100">{user.name}</div>
+                    <div className="text-xs text-slate-900 dark:text-slate-100">{emp.name}</div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {user.title} · {user.department}
+                      {emp.title} · {emp.department}
                     </div>
                   </div>
                 </button>

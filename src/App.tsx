@@ -5,28 +5,36 @@
 
 import React, { useState, useEffect } from 'react';
 import { PMSProvider, usePMS } from './context/PMSContext';
+import { RBACProvider } from './context/RBACContext';
 import { Header } from './components/layout/Header';
 import { Sidebar, NavTab } from './components/layout/Sidebar';
+import { RoleDashboard } from './components/dashboard/RoleDashboard';
 import { RoomRack } from './components/frontdesk/RoomRack';
 import { ReservationsList } from './components/frontdesk/ReservationsList';
+import { GuestManagementView } from './components/guests/GuestManagementView';
+import { RoomManagementView } from './components/rooms/RoomManagementView';
 import { RestaurantPOS } from './components/pos/RestaurantPOS';
 import { KDSView } from './components/kitchen/KDSView';
-import { LaundryView } from './components/services/LaundryView';
-import { GymPoolView } from './components/services/GymPoolView';
-import { TransportView } from './components/services/TransportView';
 import { HousekeepingBoard } from './components/housekeeping/HousekeepingBoard';
-import { MaintenanceView } from './components/maintenance/MaintenanceView';
+import { LaundryView } from './components/services/LaundryView';
 import { InventoryView } from './components/inventory/InventoryView';
 import { FinanceView } from './components/finance/FinanceView';
+import { WorkforceRBACHub } from './components/hr/WorkforceRBACHub';
+import { TransportView } from './components/services/TransportView';
+import { GymPoolView } from './components/services/GymPoolView';
+import { MaintenanceView } from './components/maintenance/MaintenanceView';
+import { ReportsAnalyticsView } from './components/reports/ReportsAnalyticsView';
+import { SettingsView } from './components/settings/SettingsView';
+import { AuditLogsView } from './components/audit/AuditLogsView';
 import { NightAuditWizard } from './components/finance/NightAuditWizard';
 import { ArchitectureViewer } from './components/architecture/ArchitectureViewer';
-import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 
 const MainAppContent: React.FC<{ isDark: boolean; setIsDark: (val: boolean) => void }> = ({
   isDark,
   setIsDark,
 }) => {
-  const [activeTab, setActiveTab] = useState<NavTab>('frontdesk');
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const { toast } = usePMS();
 
   return (
@@ -36,22 +44,66 @@ const MainAppContent: React.FC<{ isDark: boolean; setIsDark: (val: boolean) => v
 
       {/* Main Layout Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Operational Sidebar */}
+        {/* Operational Sidebar with 18 Departments */}
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* Dynamic Content Viewport */}
         <main className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full">
+          {/* 1. Dashboard */}
+          {activeTab === 'dashboard' && <RoleDashboard onNavigate={(tab: any) => setActiveTab(tab)} />}
+
+          {/* 2. Front Office */}
           {activeTab === 'frontdesk' && <RoomRack />}
+
+          {/* 3. Reservations */}
           {activeTab === 'reservations' && <ReservationsList />}
+
+          {/* 4. Guest Management */}
+          {activeTab === 'guests' && <GuestManagementView />}
+
+          {/* 5. Room Management */}
+          {activeTab === 'rooms' && <RoomManagementView />}
+
+          {/* 6. Point of Sale */}
           {activeTab === 'pos' && <RestaurantPOS />}
-          {activeTab === 'kds' && <KDSView />}
-          {activeTab === 'laundry' && <LaundryView />}
-          {activeTab === 'facilities' && <GymPoolView />}
-          {activeTab === 'transport' && <TransportView />}
+
+          {/* 7. Kitchen Management */}
+          {activeTab === 'kitchen' && <KDSView />}
+
+          {/* 8. Housekeeping */}
           {activeTab === 'housekeeping' && <HousekeepingBoard />}
-          {activeTab === 'maintenance' && <MaintenanceView />}
+
+          {/* 9. Laundry */}
+          {activeTab === 'laundry' && <LaundryView />}
+
+          {/* 10. Inventory and Procurement */}
           {activeTab === 'inventory' && <InventoryView />}
+
+          {/* 11. Finance and Accounting */}
           {activeTab === 'finance' && <FinanceView />}
+
+          {/* 12. Human Resources & Enterprise RBAC */}
+          {activeTab === 'hr' && <WorkforceRBACHub />}
+
+          {/* 13. Transport Management */}
+          {activeTab === 'transport' && <TransportView />}
+
+          {/* 14. Gym and Recreational Facilities */}
+          {activeTab === 'facilities' && <GymPoolView />}
+
+          {/* 15. Maintenance */}
+          {activeTab === 'maintenance' && <MaintenanceView />}
+
+          {/* 16. Reports and Analytics */}
+          {activeTab === 'reports' && <ReportsAnalyticsView />}
+
+          {/* 17. Settings */}
+          {activeTab === 'settings' && <SettingsView />}
+
+          {/* 18. Audit Logs */}
+          {activeTab === 'audit' && <AuditLogsView />}
+
+          {/* Additional Operational Views */}
           {activeTab === 'nightaudit' && <NightAuditWizard />}
           {activeTab === 'architecture' && <ArchitectureViewer />}
         </main>
@@ -87,7 +139,9 @@ export default function App() {
 
   return (
     <PMSProvider>
-      <MainAppContent isDark={isDark} setIsDark={setIsDark} />
+      <RBACProvider>
+        <MainAppContent isDark={isDark} setIsDark={setIsDark} />
+      </RBACProvider>
     </PMSProvider>
   );
 }

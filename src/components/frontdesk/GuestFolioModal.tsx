@@ -32,7 +32,7 @@ export const GuestFolioModal: React.FC<GuestFolioModalProps> = ({ stay, onClose 
     addPaymentToFolio,
     checkOutGuest,
     postChargeToRoom,
-    currentUser,
+    currentEmployee,
     corporateAccounts,
     showToast,
   } = usePMS();

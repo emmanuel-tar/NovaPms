@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { usePMS } from '../../context/PMSContext';
-import { Reservation, RoomCategory } from '../../types/pms';
+import { Reservation } from '../../types/pms';
 import {
   CalendarCheck,
   Search,
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export const ReservationsList: React.FC = () => {
-  const { reservations, rooms, checkInGuest, formatMoney, showToast } = usePMS();
+  const { reservations, rooms, checkInGuest, createReservation, formatMoney, showToast } = usePMS();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -31,11 +31,11 @@ export const ReservationsList: React.FC = () => {
   const [guestPhone, setGuestPhone] = useState('+234 ');
   const [guestEmail, setGuestEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [category, setCategory] = useState<RoomCategory>('Deluxe Double');
+  const [category, setCategory] = useState<string>('Deluxe Double');
   const [checkInDate, setCheckInDate] = useState('2026-11-12');
   const [checkOutDate, setCheckOutDate] = useState('2026-11-15');
   const [adults, setAdults] = useState(1);
-  const [channel, setChannel] = useState<'Walk-in' | 'Direct Phone' | 'Corporate' | 'Website'>('Direct Phone');
+  const [channel, setChannel] = useState<'Walk-in' | 'Direct Phone' | 'Corporate' | 'Website Direct'>('Direct Phone');
   const [depositPaid, setDepositPaid] = useState(50000);
 
   const filtered = reservations.filter((r) => {
@@ -276,7 +276,7 @@ export const ReservationsList: React.FC = () => {
                     <option value="Direct Phone">Direct Phone</option>
                     <option value="Corporate">Corporate Account</option>
                     <option value="Walk-in">Walk-in</option>
-                    <option value="Website">Website Direct</option>
+                    <option value="Website Direct">Website Direct</option>
                   </select>
                 </div>
                 <div>
@@ -306,25 +306,27 @@ export const ReservationsList: React.FC = () => {
                     showToast('Please enter guest name', 'error');
                     return;
                   }
-                  const code = `GV-2026-${Math.floor(8100 + Math.random() * 900)}`;
-                  reservations.unshift({
-                    id: `res-${Date.now()}`,
-                    bookingCode: code,
+                  const newRes = createReservation({
                     guestName,
                     guestPhone,
                     guestEmail,
+                    companyName: companyName || undefined,
                     category,
+                    roomCount: 1,
+                    assignedRoomNumbers: [],
                     checkInDate,
                     checkOutDate,
                     adults,
                     children: 0,
+                    nightlyRate: 95000,
                     estimatedTotal: 285000,
                     depositPaid,
                     channel,
+                    type: companyName ? 'corporate' : 'individual',
                     status: 'confirmed',
-                    createdAt: '2026-11-11 12:00',
+                    notes: '',
                   });
-                  showToast(`Reservation #${code} created for ${guestName}!`);
+                  showToast(`Reservation #${newRes.bookingCode} created for ${guestName}!`);
                   setShowAddModal(false);
                   setGuestName('');
                 }}

@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type RoomCategory = 'Standard Single' | 'Deluxe Double' | 'Executive Suite' | 'Presidential Penthouse';
+export type RoomCategoryName =
+  | 'Standard Single'
+  | 'Standard Double'
+  | 'Deluxe Room'
+  | 'Executive Suite'
+  | 'Diplomatic Suite'
+  | 'Presidential Suite';
 
 export type RoomStatus =
   | 'available'
@@ -15,35 +21,106 @@ export type RoomStatus =
   | 'out_of_order'
   | 'maintenance';
 
+export interface RoomCategoryConfig {
+  id: string;
+  name: RoomCategoryName | string;
+  code: string;
+  description: string;
+  baseRate: number; // in NGN
+  weekendRate: number;
+  seasonalRate: number;
+  extraAdultRate: number;
+  extraChildRate: number;
+  maxAdults: number;
+  maxChildren: number;
+  amenities: string[];
+  totalRoomsCount: number;
+}
+
+export interface Building {
+  id: string;
+  name: string;
+  floorsCount: number;
+  description: string;
+}
+
 export interface Room {
   id: string;
   number: string;
+  building: string;
   floor: number;
-  category: RoomCategory;
+  category: string;
   maxAdults: number;
   maxChildren: number;
-  baseRate: number; // in NGN
+  baseRate: number;
   amenities: string[];
   status: RoomStatus;
   currentStayId?: string;
+  assignedHousekeeper?: string;
   outOfOrderReason?: string;
   lastCleaned?: string;
+  keyCardStatus?: 'issued' | 'returned' | 'lost';
 }
 
 export type VIPLevel = 'Standard' | 'Silver' | 'Gold' | 'Platinum';
 
-export interface Guest {
+export interface GuestProfile {
   id: string;
+  guestCode: string;
   name: string;
   phone: string;
   email: string;
   idType: 'National ID' | 'International Passport' | "Driver's License" | 'Voter Card';
   idNumber: string;
+  nationality: string;
   address: string;
   companyName?: string;
+  emergencyContact: { name: string; phone: string; relationship: string };
   vipLevel: VIPLevel;
+  loyaltyPoints: number;
+  preferences: string[];
+  specialRequests?: string;
   totalStays: number;
+  lifetimeSpend: number;
+  outstandingBalance: number;
   notes?: string;
+  createdAt: string;
+}
+
+export type ReservationStatus =
+  | 'enquiry'
+  | 'tentative'
+  | 'confirmed'
+  | 'checked_in'
+  | 'checked_out'
+  | 'cancelled'
+  | 'no_show';
+
+export type ReservationType = 'individual' | 'group' | 'corporate' | 'walk_in' | 'online';
+
+export interface Reservation {
+  id: string;
+  bookingCode: string;
+  guestId?: string;
+  guestName: string;
+  guestPhone: string;
+  guestEmail: string;
+  companyName?: string;
+  category: string;
+  roomCount: number;
+  assignedRoomNumbers: string[];
+  checkInDate: string;
+  checkOutDate: string;
+  adults: number;
+  children: number;
+  nightlyRate: number;
+  estimatedTotal: number;
+  depositPaid: number;
+  channel: 'Walk-in' | 'Direct Phone' | 'Corporate' | 'Travel Agent' | 'Website Direct';
+  type: ReservationType;
+  status: ReservationStatus;
+  notes?: string;
+  createdAt: string;
 }
 
 export interface Stay {
@@ -54,7 +131,7 @@ export interface Stay {
   guestPhone: string;
   roomId: string;
   roomNumber: string;
-  roomCategory: RoomCategory;
+  roomCategory: string;
   checkInDate: string;
   checkOutDate: string;
   adults: number;
@@ -65,18 +142,21 @@ export interface Stay {
   notes?: string;
   checkedInAt: string;
   checkedInBy: string;
+  actualCheckOutAt?: string;
+  keyCardAssigned?: string;
 }
 
 export type DepartmentSource =
   | 'Front Desk'
   | 'Main Restaurant'
+  | 'Main Bar'
   | 'Pool Bar'
-  | 'Lounge Bar'
   | 'Room Service'
   | 'Laundry'
-  | 'Gym & Pool'
+  | 'Gym & Facilities'
   | 'Transport'
-  | 'Minibar';
+  | 'Minibar'
+  | 'Spa & Wellness';
 
 export interface FolioTransaction {
   id: string;
@@ -95,6 +175,7 @@ export interface FolioTransaction {
   taxAmount: number;
   totalAmount: number; // Net total
   status: 'posted' | 'reversed' | 'adjusted';
+  reversalReason?: string;
   createdAt: string;
   postedBy: string;
 }
@@ -106,28 +187,9 @@ export interface FolioPayment {
   paymentMethod: 'cash' | 'pos_card' | 'bank_transfer' | 'corporate_credit';
   reference?: string;
   corporateAccountId?: string;
+  receiptNumber: string;
   createdAt: string;
   receivedBy: string;
-}
-
-export interface Reservation {
-  id: string;
-  bookingCode: string;
-  guestName: string;
-  guestPhone: string;
-  guestEmail: string;
-  companyName?: string;
-  category: RoomCategory;
-  assignedRoomId?: string;
-  checkInDate: string;
-  checkOutDate: string;
-  adults: number;
-  children: number;
-  estimatedTotal: number;
-  depositPaid: number;
-  channel: 'Walk-in' | 'Direct Phone' | 'Corporate' | 'Travel Agent' | 'Website';
-  status: 'confirmed' | 'tentative' | 'checked_in' | 'cancelled' | 'no_show';
-  createdAt: string;
 }
 
 export type KitchenStation =
@@ -139,7 +201,8 @@ export type KitchenStation =
 
 export interface MenuItem {
   id: string;
-  outletIds: string[]; // e.g. ['main_rest', 'pool_bar']
+  outletIds: string[];
+  code: string;
   name: string;
   category: 'Starters & Soups' | 'Main Entrees' | 'Grill & BBQ' | 'Pizzas & Pasta' | 'Beverages & Cocktails' | 'Desserts';
   price: number;
@@ -147,7 +210,7 @@ export interface MenuItem {
   available: boolean;
   prepTimeMinutes: number;
   description: string;
-  ingredients: { itemName: string; qty: number; unit: string }[];
+  ingredients: { itemId: string; itemName: string; qty: number; unit: string }[];
 }
 
 export interface OrderCartItem {
@@ -162,7 +225,7 @@ export interface POSOrder {
   outletId: string;
   outletName: string;
   orderType: 'dine_in' | 'takeaway' | 'room_service';
-  tableOrRoom: string; // e.g. "Table 4" or "Room 205"
+  tableOrRoom: string;
   stayId?: string;
   roomId?: string;
   guestName?: string;
@@ -171,17 +234,18 @@ export interface POSOrder {
     quantity: number;
     notes?: string;
     station: KitchenStation;
-    status: 'pending' | 'preparing' | 'ready' | 'served';
+    status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
   }[];
   subtotal: number;
   tax: number;
+  serviceCharge: number;
   discount: number;
   total: number;
-  paymentMethod: 'room_charge' | 'cash' | 'pos_card' | 'bank_transfer';
+  paymentMethod: 'room_charge' | 'cash' | 'pos_card' | 'bank_transfer' | 'split';
   paymentStatus: 'paid' | 'pending';
   folioTransactionId?: string;
-  createdAt: string;
   cashierName: string;
+  createdAt: string;
 }
 
 export interface KitchenTicket {
@@ -194,12 +258,40 @@ export interface KitchenTicket {
     name: string;
     quantity: number;
     notes?: string;
-    status: 'pending' | 'preparing' | 'ready' | 'served';
+    status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
   }[];
   tableOrRoom: string;
   orderTime: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served';
+  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
   priority: 'normal' | 'rush' | 'vip';
+}
+
+export interface HousekeepingTask {
+  id: string;
+  roomId: string;
+  roomNumber: string;
+  roomCategory: string;
+  taskType: 'Checkout Turnaround' | 'Daily Refresh' | 'Deep Sanitization' | 'Supervisor Inspection';
+  assignedTo: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'inspected';
+  priority: 'normal' | 'high' | 'urgent';
+  checklist: { task: string; completed: boolean }[];
+  minibarChecked: boolean;
+  minibarChargesPosted?: number;
+  notes?: string;
+  updatedAt: string;
+}
+
+export interface LostAndFoundItem {
+  id: string;
+  itemCode: string;
+  description: string;
+  foundLocation: string; // e.g. Room 205
+  foundBy: string;
+  foundDate: string;
+  status: 'claimed' | 'unclaimed' | 'disposed';
+  claimedBy?: string;
+  claimedDate?: string;
 }
 
 export interface LaundryOrder {
@@ -228,7 +320,7 @@ export interface FacilityPass {
   roomNumber?: string;
   guestName: string;
   guestPhone?: string;
-  facility: 'Gym Fitness Centre' | 'Olympic Swimming Pool' | 'Sauna & Steam Bath';
+  facility: 'Gym Fitness Centre' | 'Olympic Swimming Pool' | 'Sauna & Steam Bath' | 'Tennis Court';
   passType: 'Complimentary (In-House)' | 'Day Pass' | 'Personal Training Session' | 'Monthly Membership';
   amount: number;
   paymentMethod?: 'room_charge' | 'cash' | 'pos_card';
@@ -244,8 +336,8 @@ export interface TransportTrip {
   stayId?: string;
   roomNumber?: string;
   tripType: 'Airport Pickup' | 'Airport Drop-off' | 'VIP Chauffeur City Ride' | 'Hotel Shuttle Bus';
-  vehicle: string; // e.g. "Toyota Prado TX - APP-492-LG"
-  driver: string; // e.g. "Chinedu Okafor"
+  vehicle: string;
+  driver: string;
   pickupLocation: string;
   destination: string;
   scheduledTime: string;
@@ -256,25 +348,32 @@ export interface TransportTrip {
   bookedAt: string;
 }
 
+export type StoreLocation =
+  | 'Central Warehouse'
+  | 'Kitchen Store'
+  | 'Restaurant Store'
+  | 'Bar Store'
+  | 'Housekeeping Store'
+  | 'Laundry Store'
+  | 'Maintenance Store';
+
 export interface InventoryItem {
   id: string;
   code: string;
   name: string;
-  category: 'Food Ingredients' | 'Beverages & Spirits' | 'Linen & Bedding' | 'Cleaning Chemicals' | 'Guest Amenities';
-  centralStock: number;
-  kitchenStock: number;
-  barStock: number;
-  housekeepingStock: number;
+  category: 'Food Ingredients' | 'Beverages & Spirits' | 'Linen & Bedding' | 'Cleaning Chemicals' | 'Guest Amenities' | 'Maintenance Parts';
+  storeStocks: Record<StoreLocation, number>;
   unit: string;
   reorderLevel: number;
   unitCost: number;
+  supplierName: string;
 }
 
 export interface StockMovement {
   id: string;
   movementCode: string;
   date: string;
-  type: 'Goods Received (GRN)' | 'Department Transfer' | 'POS Consumption' | 'Wastage / Expiry';
+  type: 'Goods Received (GRN)' | 'Department Transfer' | 'POS Consumption' | 'Wastage / Expiry' | 'Physical Count Adjustment';
   fromStore: string;
   toStore: string;
   itemName: string;
@@ -284,18 +383,16 @@ export interface StockMovement {
   notes: string;
 }
 
-export interface HousekeepingTask {
+export interface PurchaseOrder {
   id: string;
-  roomId: string;
-  roomNumber: string;
-  roomCategory: RoomCategory;
-  taskType: 'Checkout Turnaround' | 'Daily Refresh' | 'Deep Sanitization' | 'Supervisor Inspection';
-  assignedTo: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'inspected';
-  priority: 'normal' | 'high' | 'urgent';
-  minibarChecked: boolean;
-  minibarChargesPosted?: number;
-  updatedAt: string;
+  poNumber: string;
+  supplierName: string;
+  orderDate: string;
+  expectedDate: string;
+  items: { itemName: string; quantity: number; unit: string; estimatedCost: number }[];
+  totalCost: number;
+  status: 'pending_approval' | 'approved' | 'received' | 'cancelled';
+  requestedBy: string;
 }
 
 export interface MaintenanceRequest {
@@ -311,7 +408,9 @@ export interface MaintenanceRequest {
   assignedTechnician: string;
   status: 'open' | 'in_progress' | 'resolved';
   locksRoom: boolean;
+  costEstimate?: number;
   createdAt: string;
+  resolvedAt?: string;
 }
 
 export interface CorporateAccount {
@@ -328,14 +427,62 @@ export interface CorporateAccount {
   lastBilled: string;
 }
 
-export interface StaffUser {
+export interface AccountLedgerEntry {
   id: string;
+  accountNumber: string;
+  accountName: string;
+  accountType: 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense';
+  debit: number;
+  credit: number;
+  description: string;
+  date: string;
+  reference: string;
+}
+
+export type StaffRole =
+  | 'super_admin'
+  | 'general_manager'
+  | 'front_office_manager'
+  | 'receptionist'
+  | 'accountant'
+  | 'cashier'
+  | 'restaurant_manager'
+  | 'waiter'
+  | 'chef'
+  | 'housekeeping_supervisor'
+  | 'housekeeping_staff'
+  | 'storekeeper'
+  | 'procurement_officer'
+  | 'maintenance_staff'
+  | 'auditor';
+
+export interface Employee {
+  id: string;
+  empNumber: string;
   name: string;
-  role: 'super_admin' | 'front_desk' | 'restaurant_cashier' | 'chef' | 'laundry_staff' | 'storekeeper' | 'accountant' | 'housekeeper';
+  email: string;
+  phone: string;
+  role: StaffRole;
   title: string;
   department: string;
-  shift: string;
+  shift: 'Morning (07:00-15:00)' | 'Evening (15:00-23:00)' | 'Night (23:00-07:00)' | 'General Shift';
+  status: 'active' | 'on_leave' | 'terminated';
+  hireDate: string;
+  salary: number;
   avatarColor: string;
+}
+
+export interface AuditLog {
+  id: string;
+  logCode: string;
+  timestamp: string;
+  userName: string;
+  userRole: string;
+  category: 'AUTH' | 'FINANCE' | 'RESERVATION' | 'ROOM_STATUS' | 'FOLIO_CHARGE' | 'DISCOUNT' | 'INVENTORY' | 'CONFIG';
+  action: string;
+  details: string;
+  ipAddress: string;
+  severity: 'info' | 'warning' | 'critical';
 }
 
 export interface NightAuditRun {
@@ -354,4 +501,20 @@ export interface NightAuditRun {
   adr: number;
   revPar: number;
   notes: string;
+}
+
+export interface HotelSettings {
+  hotelName: string;
+  address: string;
+  cityCountry: string;
+  tinNumber: string;
+  phone: string;
+  email: string;
+  baseCurrency: 'NGN' | 'USD';
+  vatRate: number; // 0.075
+  serviceChargeRate: number; // 0.05
+  tourismLevyRate: number; // 0.01
+  checkInTime: string; // 14:00
+  checkOutTime: string; // 12:00
+  nightAuditHour: string; // 02:00
 }

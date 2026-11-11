@@ -1,0 +1,35 @@
+-- Migration: 001_initial_rbac_schema.sql
+-- Description: Baseline schema for Workforce Management, Multi-Role RBAC & Approval Authority
+-- Reversible: Yes
+
+-- UP
+\i database/schema.sql
+
+-- DOWN
+-- To rollback:
+-- DROP TABLE IF EXISTS permission_change_history CASCADE;
+-- DROP TABLE IF EXISTS security_events CASCADE;
+-- DROP TABLE IF EXISTS audit_logs CASCADE;
+-- DROP TABLE IF EXISTS cashier_shifts CASCADE;
+-- DROP TABLE IF EXISTS leave_requests CASCADE;
+-- DROP TABLE IF EXISTS leave_types CASCADE;
+-- DROP TABLE IF EXISTS attendance_records CASCADE;
+-- DROP TABLE IF EXISTS employee_shifts CASCADE;
+-- DROP TABLE IF EXISTS approval_history CASCADE;
+-- DROP TABLE IF EXISTS approval_requests CASCADE;
+-- DROP TABLE IF EXISTS approval_policies CASCADE;
+-- DROP TABLE IF EXISTS password_reset_tokens CASCADE;
+-- DROP TABLE IF EXISTS account_invitations CASCADE;
+-- DROP TABLE IF EXISTS login_attempts CASCADE;
+-- DROP TABLE IF EXISTS user_sessions CASCADE;
+-- DROP TABLE IF EXISTS user_outlet_access CASCADE;
+-- DROP TABLE IF EXISTS user_department_access CASCADE;
+-- DROP TABLE IF EXISTS user_permissions CASCADE;
+-- DROP TABLE IF EXISTS user_roles CASCADE;
+-- DROP TABLE IF EXISTS role_permissions CASCADE;
+-- DROP TABLE IF EXISTS permissions CASCADE;
+-- DROP TABLE IF EXISTS roles CASCADE;
+-- DROP TABLE IF EXISTS users CASCADE;
+-- DROP TABLE IF EXISTS employees CASCADE;
+-- DROP TABLE IF EXISTS job_positions CASCADE;
+-- DROP TABLE IF EXISTS departments CASCADE;

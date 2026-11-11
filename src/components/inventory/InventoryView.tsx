@@ -5,7 +5,8 @@
 
 import React, { useState } from 'react';
 import { usePMS } from '../../context/PMSContext';
-import { Boxes, ArrowRightLeft, Plus, History, AlertTriangle } from 'lucide-react';
+import { StoreLocation } from '../../types/pms';
+import { Boxes, ArrowRightLeft, History, AlertTriangle } from 'lucide-react';
 
 export const InventoryView: React.FC = () => {
   const { inventory, stockMovements, transferStock, formatMoney, showToast } = usePMS();
@@ -14,7 +15,7 @@ export const InventoryView: React.FC = () => {
   const [showTransferModal, setShowTransferModal] = useState(false);
 
   const [selectedItemId, setSelectedItemId] = useState(inventory[0]?.id || '');
-  const [toStore, setToStore] = useState<'kitchenStock' | 'barStock' | 'housekeepingStock'>('kitchenStock');
+  const [toStore, setToStore] = useState<StoreLocation>('Kitchen Store');
   const [quantity, setQuantity] = useState(5);
   const [notes, setNotes] = useState('Department requisition');
 
@@ -98,7 +99,7 @@ export const InventoryView: React.FC = () => {
                 <tr>
                   <th className="py-3 px-4">Item Code</th>
                   <th className="py-3 px-4">Item Name & Category</th>
-                  <th className="py-3 px-4 text-right">Central Store</th>
+                  <th className="py-3 px-4 text-right">Central Warehouse</th>
                   <th className="py-3 px-4 text-right">Kitchen Store</th>
                   <th className="py-3 px-4 text-right">Bar Store</th>
                   <th className="py-3 px-4 text-right">Housekeeping</th>
@@ -108,9 +109,11 @@ export const InventoryView: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {inventory.map((item) => {
-                  const totalStock =
-                    item.centralStock + item.kitchenStock + item.barStock + item.housekeepingStock;
-                  const isLow = item.centralStock <= item.reorderLevel;
+                  const centralStock = item.storeStocks['Central Warehouse'] || 0;
+                  const kitchenStock = item.storeStocks['Kitchen Store'] || 0;
+                  const barStock = item.storeStocks['Bar Store'] || 0;
+                  const hkStock = item.storeStocks['Housekeeping Store'] || 0;
+                  const isLow = centralStock <= item.reorderLevel;
 
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
@@ -122,16 +125,16 @@ export const InventoryView: React.FC = () => {
                         <div className="text-[11px] text-slate-500">{item.category}</div>
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                        {item.centralStock} {item.unit}
+                        {centralStock} {item.unit}
                       </td>
                       <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                        {item.kitchenStock} {item.unit}
+                        {kitchenStock} {item.unit}
                       </td>
                       <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                        {item.barStock} {item.unit}
+                        {barStock} {item.unit}
                       </td>
                       <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                        {item.housekeepingStock} {item.unit}
+                        {hkStock} {item.unit}
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-semibold tabular-nums text-slate-700 dark:text-slate-300">
                         {formatMoney(item.unitCost)}
@@ -143,8 +146,8 @@ export const InventoryView: React.FC = () => {
                             Low Stock (Reorder &le; {item.reorderLevel})
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
-                            Adequate Stock
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded w-fit">
+                            Adequate
                           </span>
                         )}
                       </td>
@@ -164,45 +167,31 @@ export const InventoryView: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="py-3 px-4">Slip / Code</th>
-                  <th className="py-3 px-4">Date / Time</th>
-                  <th className="py-3 px-4">Movement Type</th>
-                  <th className="py-3 px-4">Source Store &rarr; Destination</th>
-                  <th className="py-3 px-4">Item & Quantity</th>
-                  <th className="py-3 px-4">Responsible User</th>
-                  <th className="py-3 px-4">Audit Notes</th>
+                  <th className="py-3 px-4">Transfer Code</th>
+                  <th className="py-3 px-4">Date & Time</th>
+                  <th className="py-3 px-4">Item Transferred</th>
+                  <th className="py-3 px-4">From Store</th>
+                  <th className="py-3 px-4">Destination Store</th>
+                  <th className="py-3 px-4 text-right">Quantity</th>
+                  <th className="py-3 px-4">Authorized User</th>
+                  <th className="py-3 px-4">Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {stockMovements.map((mov) => (
-                  <tr key={mov.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                {stockMovements.map((m) => (
+                  <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">
-                      {mov.movementCode}
+                      {m.movementCode}
                     </td>
-                    <td className="py-3 px-4 font-mono text-slate-500 tabular-nums">
-                      {mov.date}
+                    <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{m.date}</td>
+                    <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{m.itemName}</td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{m.fromStore}</td>
+                    <td className="py-3 px-4 font-medium text-blue-600 dark:text-blue-400">{m.toStore}</td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
+                      {m.quantity} {m.unit}
                     </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                          mov.type.includes('GRN')
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                            : mov.type.includes('Consumption')
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
-                            : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                        }`}
-                      >
-                        {mov.type}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
-                      {mov.fromStore} &rarr; <strong>{mov.toStore}</strong>
-                    </td>
-                    <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                      {mov.quantity} {mov.unit} of {mov.itemName}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{mov.user}</td>
-                    <td className="py-3 px-4 text-slate-500 text-[11px] italic">{mov.notes}</td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{m.user}</td>
+                    <td className="py-3 px-4 text-slate-500 text-[11px] max-w-xs truncate">{m.notes}</td>
                   </tr>
                 ))}
               </tbody>
@@ -211,12 +200,12 @@ export const InventoryView: React.FC = () => {
         </div>
       )}
 
-      {/* Transfer Modal */}
+      {/* TRANSFER MODAL */}
       {showTransferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6 text-xs space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Department Stock Transfer Requisition
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl text-xs space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              Inter-Store Commodity Requisition
             </h3>
 
             <form onSubmit={handleTransfer} className="space-y-4">
@@ -229,7 +218,7 @@ export const InventoryView: React.FC = () => {
                 >
                   {inventory.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.name} (Central: {i.centralStock} {i.unit})
+                      {i.name} (Central: {i.storeStocks['Central Warehouse'] || 0} {i.unit})
                     </option>
                   ))}
                 </select>
@@ -243,9 +232,12 @@ export const InventoryView: React.FC = () => {
                     onChange={(e: any) => setToStore(e.target.value)}
                     className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
                   >
-                    <option value="kitchenStock">Main Kitchen Store</option>
-                    <option value="barStock">Pool & Lounge Bar Store</option>
-                    <option value="housekeepingStock">Housekeeping Store</option>
+                    <option value="Kitchen Store">Main Kitchen Store</option>
+                    <option value="Restaurant Store">Restaurant Store</option>
+                    <option value="Bar Store">Pool & Lounge Bar Store</option>
+                    <option value="Housekeeping Store">Housekeeping Store</option>
+                    <option value="Laundry Store">Laundry Store</option>
+                    <option value="Maintenance Store">Maintenance Store</option>
                   </select>
                 </div>
                 <div>
@@ -253,7 +245,7 @@ export const InventoryView: React.FC = () => {
                   <input
                     type="number"
                     min="1"
-                    max={selectedItem?.centralStock || 100}
+                    max={selectedItem?.storeStocks['Central Warehouse'] || 100}
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
                     className="w-full px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono font-bold"
@@ -281,7 +273,7 @@ export const InventoryView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold hover:bg-slate-800"
+                  className="px-4 py-1.5 rounded bg-emerald-600 text-white font-bold hover:bg-emerald-700"
                 >
                   Confirm Transfer
                 </button>
