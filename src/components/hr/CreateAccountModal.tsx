@@ -10,11 +10,13 @@ import { X, Key, Shield, User, AlertCircle, Check } from 'lucide-react';
 interface CreateAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialEmployeeId?: string | null;
 }
 
 export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   isOpen,
   onClose,
+  initialEmployeeId,
 }) => {
   const {
     employees,
@@ -26,7 +28,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   // Eligible employees without accounts
   const unlinkedEmployees = employees.filter((e) => !e.hasLoginAccount && e.employmentStatus !== 'archived');
 
-  const [selectedEmpId, setSelectedEmpId] = useState(unlinkedEmployees[0]?.id || '');
+  const [selectedEmpId, setSelectedEmpId] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [tempPassword, setTempPassword] = useState('Welcome@2026');
@@ -36,6 +38,23 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   const [outletScope, setOutletScope] = useState<'all' | 'custom'>('all');
   const [selectedOutletIds, setSelectedOutletIds] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Sync when modal opens or initialEmployeeId changes
+  React.useEffect(() => {
+    if (isOpen) {
+      const targetId = initialEmployeeId || unlinkedEmployees[0]?.id || '';
+      setSelectedEmpId(targetId);
+      const emp = employees.find((e) => e.id === targetId);
+      if (emp) {
+        setUsername(`${emp.firstName.toLowerCase()}.${emp.lastName.toLowerCase()}`);
+        setEmail(emp.email);
+      } else {
+        setUsername('');
+        setEmail('');
+      }
+      setErrorMsg(null);
+    }
+  }, [isOpen, initialEmployeeId]);
 
   if (!isOpen) return null;
 

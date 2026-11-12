@@ -12,3 +12,84 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* ============================================================================
+   HOTEL PMS UI TEMPLATE SKINS
+   ============================================================================ */
+
+/* 1. OPERA CLASSIC / HIGH-DENSITY FRONT DESK TERMINAL */
+.theme-high_density {
+  --color-emerald-600: #2563eb;
+  --color-emerald-700: #1d4ed8;
+}
+
+.theme-high_density table th,
+.theme-high_density table td {
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+  font-size: 0.775rem !important;
+}
+
+.theme-high_density .p-6 {
+  padding: 1rem !important;
+}
+
+.theme-high_density .p-5 {
+  padding: 0.85rem !important;
+}
+
+.theme-high_density .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+
+.theme-high_density .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.65rem !important;
+}
+
+.theme-high_density button {
+  letter-spacing: 0.01em;
+}
+
+/* 2. MIDNIGHT OBSIDIAN & CHAMPAGNE BOUTIQUE */
+.theme-luxury_obsidian {
+  --color-emerald-600: #d97706;
+  --color-emerald-700: #b45309;
+}
+
+.theme-luxury_obsidian body,
+.theme-luxury_obsidian main {
+  background-color: #090a0b !important;
+}
+
+.theme-luxury_obsidian .bg-white {
+  background-color: #121417 !important;
+  border-color: #272a30 !important;
+}
+
+.theme-luxury_obsidian .bg-slate-50,
+.theme-luxury_obsidian .bg-slate-100 {
+  background-color: #181a1f !important;
+}
+
+/* 3. TOUCH POS & TABLET TERMINAL */
+.theme-touch_pos {
+  --color-emerald-600: #ea580c;
+  --color-emerald-700: #c2410c;
+}
+
+.theme-touch_pos button {
+  min-height: 40px !important;
+  font-size: 0.825rem !important;
+  font-weight: 700 !important;
+}
+
+.theme-touch_pos input,
+.theme-touch_pos select {
+  min-height: 40px !important;
+  font-size: 0.85rem !important;
+}
+
+.theme-touch_pos .rounded-xl,
+.theme-touch_pos .rounded-2xl {
+  border-width: 1.5px !important;
+}

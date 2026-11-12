@@ -67,6 +67,7 @@ export const WorkforceRBACHub: React.FC = () => {
   const [employeeToEdit, setEmployeeToEdit] = useState<EmployeeRecord | null>(null);
   const [profileModalEmp, setProfileModalEmp] = useState<EmployeeRecord | null>(null);
   const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
+  const [createAccountEmpId, setCreateAccountEmpId] = useState<string | null>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // User switcher dropdown
@@ -76,9 +77,18 @@ export const WorkforceRBACHub: React.FC = () => {
   const pendingLeavesCount = leaveRequests.filter((l) => l.status === 'pending').length;
   const openCashierCount = cashierShifts.filter((c) => c.status === 'open').length;
 
-  const handleNavigateSubTab = (tab: string) => {
+  const handleOpenCreateAccount = (empId?: string) => {
+    setCreateAccountEmpId(empId || null);
+    setIsCreateAccountOpen(true);
+  };
+
+  const handleNavigateSubTab = (tab: string, targetEmpId?: string) => {
     if (tab === 'create-account') {
-      setIsCreateAccountOpen(true);
+      handleOpenCreateAccount(targetEmpId);
+      return;
+    }
+    if (tab === 'invite-employee') {
+      setIsInviteModalOpen(true);
       return;
     }
     if (tab === 'add-employee') {
@@ -345,6 +355,20 @@ export const WorkforceRBACHub: React.FC = () => {
               User Accounts Directory
             </button>
             <button
+              onClick={() => handleOpenCreateAccount()}
+              className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
+            >
+              <Key className="w-3.5 h-3.5 text-emerald-600" />
+              <span>+ Create Account (Workflow A)</span>
+            </button>
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100 transition-colors flex items-center gap-1.5"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+              <span>+ Invite Employee (Workflow B)</span>
+            </button>
+            <button
               onClick={() => setSubTab('sessions')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 subTab === 'sessions'
@@ -436,6 +460,7 @@ export const WorkforceRBACHub: React.FC = () => {
             onOpenProfile={handleOpenProfile}
             onEditEmployee={handleEditEmployee}
             onNavigateSubTab={handleNavigateSubTab}
+            onOpenCreateAccountForEmployee={(empId) => handleOpenCreateAccount(empId)}
           />
         )}
         {activeSection === 'EMPLOYEE_MANAGEMENT' && subTab === 'departments' && (
@@ -454,7 +479,7 @@ export const WorkforceRBACHub: React.FC = () => {
         {/* SECTION 2: USER ACCOUNT MANAGEMENT */}
         {activeSection === 'USER_ACCOUNT_MANAGEMENT' && subTab === 'users' && (
           <UserAccountsView
-            onOpenCreateAccount={() => setIsCreateAccountOpen(true)}
+            onOpenCreateAccount={() => handleOpenCreateAccount()}
             onOpenInviteModal={() => setIsInviteModalOpen(true)}
             onNavigateSubTab={handleNavigateSubTab}
           />
@@ -501,7 +526,11 @@ export const WorkforceRBACHub: React.FC = () => {
 
       <CreateAccountModal
         isOpen={isCreateAccountOpen}
-        onClose={() => setIsCreateAccountOpen(false)}
+        onClose={() => {
+          setIsCreateAccountOpen(false);
+          setCreateAccountEmpId(null);
+        }}
+        initialEmployeeId={createAccountEmpId}
       />
 
       <InviteEmployeeModal

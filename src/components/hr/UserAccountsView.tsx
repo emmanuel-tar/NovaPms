@@ -140,6 +140,45 @@ export const UserAccountsView: React.FC<UserAccountsViewProps> = ({
         </div>
       )}
 
+      {/* Account KPI & Workflow Explainer Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active User Accounts</div>
+          <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+            {userAccounts.filter((u) => u.status === 'active').length}
+          </div>
+          <div className="text-[10px] text-slate-400">Authenticated staff logins</div>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Invitations</div>
+          <div className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+            {userAccounts.filter((u) => u.status === 'pending_invitation').length}
+          </div>
+          <div className="text-[10px] text-slate-400">Workflow B single-use tokens</div>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Suspended / Inactive</div>
+          <div className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+            {userAccounts.filter((u) => u.status === 'suspended' || u.status === 'disabled').length}
+          </div>
+          <div className="text-[10px] text-slate-400">Access revoked accounts</div>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Workforce Security Rule</div>
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+              Separated HR vs Login Credentials
+            </div>
+          </div>
+          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+            ✓ Last Super Admin Protected
+          </div>
+        </div>
+      </div>
+
       {/* Action and Filter Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-lg">
